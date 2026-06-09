@@ -30,18 +30,18 @@ jobs:
 
       - name: Build executable with PyInstaller
         run: |
-          pyinstaller --onefile --noconsole --name EchoAnalysis main.py
+          pyinstaller --onefile --noconsole --name EchoAnalysis_v${{ github.run_number }} main.py
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: EchoSurvey-EXE
-          path: dist/EchoAnalysis.exe
+          path: dist/EchoAnalysis_v${{ github.run_number }}.exe
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/EchoAnalysis.exe
+          files: dist/EchoAnalysis_v${{ github.run_number }}.exe
           tag_name: "v${{ github.run_number }}"
           name: "Release v${{ github.run_number }}"
         env:

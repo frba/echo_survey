@@ -1,4 +1,6 @@
 import xml.etree.ElementTree as ET
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np

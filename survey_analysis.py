@@ -1,4 +1,6 @@
 import xml.etree.ElementTree as ET
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
@@ -103,15 +105,23 @@ def plot_plate(xml_file, required_volumes=None):
         except (KeyError, ValueError):
             continue
 
+    skipped_wells_elem = root.find('.//skippedwells')
+    skipped_count = 0
+    if skipped_wells_elem is not None:
+        skipped_count = int(skipped_wells_elem.attrib.get('total', '0'))
+
     if plate_requirements:
         print(f"\n--- Volume Check Report for Plate: {barcode} ---")
-        if insufficient_wells:
-            print(f"WARNING: Found {len(insufficient_wells)} wells with insufficient volume!")
-            for w_name, req, avail, total_uL, dead_uL in insufficient_wells:
-                print(f"  - Well {w_name}: Required {req} nL, but only has {max(0, avail):.2f} nL available "
-                      f"(Total: {total_uL} uL, Dead Volume: {dead_uL} uL).")
+        if insufficient_wells or skipped_count > 0:
+            if insufficient_wells:
+                print(f"WARNING: Found {len(insufficient_wells)} wells with insufficient volume!")
+                for w_name, req, avail, total_uL, dead_uL in insufficient_wells:
+                    print(f"  - Well {w_name}: Required {req} nL, but only has {max(0, avail):.2f} nL available "
+                          f"(Total: {total_uL} uL, Dead Volume: {dead_uL} uL).")
+            if skipped_count > 0:
+                print(f"WARNING: Found {skipped_count} skipped wells!")
         else:
-            print("SUCCESS: All required wells have sufficient volume.")
+            print("SUCCESS: All required wells have sufficient volume and no wells were skipped.")
         print("--------------------------------------------------\n")
 
     # Set up the matplotlib figure
@@ -149,16 +159,26 @@ def plot_plate(xml_file, required_volumes=None):
     ax.grid(which='minor', color='black', linestyle='-', linewidth=1)
     ax.tick_params(which='minor', bottom=False, left=False)
 
-    if insufficient_wells:
-        plt.title(f"Plate Layout: {filename}\nWARNING: {len(insufficient_wells)} wells have INSUFFICIENT volume!", color='red', fontweight='bold')
-        
-        warning_text = f"Low Volume Wells:\n"
-        for w_name, req, avail, total_uL, dead_uL in insufficient_wells[:12]:
-            warning_text += f"{w_name}: Req {req}nL, Avail {max(0, avail):.0f}nL\n"
-        if len(insufficient_wells) > 12:
-            warning_text += f"...and {len(insufficient_wells) - 12} more."
+    if insufficient_wells or skipped_count > 0:
+        warning_parts = []
+        if insufficient_wells:
+            warning_parts.append(f"{len(insufficient_wells)} insufficient")
+        if skipped_count > 0:
+            warning_parts.append(f"{skipped_count} skipped")
             
-        plt.figtext(0.82, 0.5, warning_text, ha="left", va="center", fontsize=8, color="red",
+        plt.title(f"Plate Layout: {filename}\nWARNING: {', '.join(warning_parts)}!", color='red', fontweight='bold')
+        
+        warning_text = ""
+        if insufficient_wells:
+            warning_text += f"Low Volume Wells:\n"
+            for w_name, req, avail, total_uL, dead_uL in insufficient_wells[:12]:
+                warning_text += f"{w_name}: Req {req}nL, Avail {max(0, avail):.0f}nL\n"
+            if len(insufficient_wells) > 12:
+                warning_text += f"...and {len(insufficient_wells) - 12} more.\n"
+        if skipped_count > 0:
+            warning_text += f"\nSkipped Wells: {skipped_count}"
+            
+        plt.figtext(0.82, 0.5, warning_text.strip(), ha="left", va="center", fontsize=8, color="red",
                     bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', boxstyle='round,pad=0.5'))
         plt.tight_layout(rect=[0, 0, 0.8, 1])
     else:
@@ -167,6 +187,8 @@ def plot_plate(xml_file, required_volumes=None):
     
     # This will display the window popup
     plt.show()
+    
+    return len(insufficient_wells) > 0 or skipped_count > 0
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Echo Survey Analysis Monitor")
@@ -193,6 +215,11 @@ if __name__ == "__main__":
     target_path = args.path
     if os.path.isfile(target_path):
         # Just analyze the single file
-        plot_plate(target_path, req_vols)
+        has_errors = plot_plate(target_path, req_vols)
+        if has_errors:
+            sys.exit(1)
+        else:
+            sys.exit(0)
     else:
         print(f"Error: Path '{target_path}' does not exist or is not a file.")
+        sys.exit(1)
