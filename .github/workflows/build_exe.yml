@@ -42,7 +42,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/EchoAnalysis.exe
-          tag_name: "build-${{ github.sha }}"
-          name: "Build ${{ github.sha }}"
+          tag_name: "v${{ github.run_number }}"
+          name: "Release v${{ github.run_number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
