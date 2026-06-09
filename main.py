@@ -16,12 +16,14 @@ class Logger(object):
         self.log = open(filename, "a", encoding="utf-8")
         
     def write(self, message):
-        self.terminal.write(message)
+        if self.terminal:
+            self.terminal.write(message)
         self.log.write(message)
         self.log.flush()
 
     def flush(self):
-        self.terminal.flush()
+        if self.terminal:
+            self.terminal.flush()
         self.log.flush()
 
 # Route all prints and errors to the unified log file
