@@ -123,7 +123,8 @@ def plot_print_plate(filename, total_skipped, skipped_wells):
                     bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', boxstyle='round,pad=0.5'))
         plt.tight_layout(rect=[0, 0, 0.8, 1])
         plt.show()
-
+        return True
     else:
         print("SUCCESS: All transfered wells were successful (0 skipped wells).")
         print("--------------------------------------------------\n")
+        return False

@@ -77,13 +77,16 @@ def monitor_directory(path, required_volumes=None):
                 print(f"Analyzing {file_type} file: {filepath}...")
                 
                 if file_type == "survey":
-                    plot_plate(filepath, required_volumes)
-                    break # Exit after one analysis completes
+                    has_errors = plot_plate(filepath, required_volumes)
+                    return has_errors
                 elif file_type == "print":
                     total_skipped, skipped_wells, barcode = parse_printresult_xml(filepath)
                     if total_skipped is not None:
-                        plot_print_plate(filepath, total_skipped, skipped_wells)
-                        break # Exit after one analysis completes
+                        has_errors = plot_print_plate(filepath, total_skipped, skipped_wells)
+                        return has_errors
+                    else:
+                        return True
+
                 
             except queue.Empty:
                 pass
@@ -126,18 +129,23 @@ if __name__ == "__main__":
             sys.exit(1)
             
     if os.path.isdir(target_path):
-        monitor_directory(target_path, required_volumes=req_vols)
+        has_errors = monitor_directory(target_path, required_volumes=req_vols)
+        sys.exit(1 if has_errors else 0)
     elif os.path.isfile(target_path):
+        has_errors = False
         # Determine type and process immediately
         if "SurveyResult" in target_path:
-            plot_plate(target_path, req_vols)
+            has_errors = plot_plate(target_path, req_vols)
         elif "PrintResult" in target_path:
             total_skipped, skipped_wells, barcode = parse_printresult_xml(target_path)
             if total_skipped is not None:
-                plot_print_plate(target_path, total_skipped, skipped_wells)
+                has_errors = plot_print_plate(target_path, total_skipped, skipped_wells)
+            else:
+                has_errors = True
         else:
             print(f"Error: File '{target_path}' is neither a recognized SurveyResult nor PrintResult XML file.")
             sys.exit(1)
+        sys.exit(1 if has_errors else 0)
     else:
         print(f"Error: Path '{target_path}' does not exist.")
         sys.exit(1)
