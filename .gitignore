@@ -1,0 +1,7 @@
+.DS_Store
+venv/
+__pycache__/
+.vscode/
+echo_analysis.log
+print_analysis.log
+survey_analysis.log
