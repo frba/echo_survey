@@ -30,71 +30,41 @@ class Logger(object):
 sys.stdout = Logger()
 sys.stderr = sys.stdout
 
-class UnifiedFileHandler(FileSystemEventHandler):
-    def __init__(self, file_queue):
-        self.file_queue = file_queue
-        self.processed_files = set()
-        super().__init__()
+import glob
 
-    def on_any_event(self, event):
-        if event.is_directory:
-            return
-        
-        if event.event_type in ['created', 'modified']:
-            filepath = event.src_path
-            filename = os.path.basename(filepath)
+def process_latest_file(path, required_volumes=None):
+    print(f"Searching for the most recently created XML file in: {path}")
+    
+    xml_files = []
+    for f in glob.glob(os.path.join(path, '*.xml')):
+        filename = os.path.basename(f)
+        if "SurveyResult" in filename or "PrintResult" in filename:
+            xml_files.append(f)
             
-            if filename.endswith('.xml'):
-                if "SurveyResult" in filename:
-                    file_type = "survey"
-                elif "PrintResult" in filename:
-                    file_type = "print"
-                else:
-                    return # Ignore other XML files
-                    
-                if filepath not in self.processed_files:
-                    self.processed_files.add(filepath)
-                    print(f"\nNew {file_type} file detected: {filename}")
-                    self.file_queue.put((file_type, filepath))
-
-def monitor_directory(path, required_volumes=None):
-    print(f"Monitoring directory for new SurveyResult and PrintResult XML files: {path}")
+    if not xml_files:
+        print(f"Error: No SurveyResult or PrintResult XML files found in {path}.")
+        return True
+        
+    latest_file = max(xml_files, key=os.path.getmtime)
+    filename = os.path.basename(latest_file)
     
-    file_queue = queue.Queue()
-    event_handler = UnifiedFileHandler(file_queue)
-    observer = Observer()
-    observer.schedule(event_handler, path, recursive=False)
-    observer.start()
+    if "SurveyResult" in filename:
+        file_type = "survey"
+    elif "PrintResult" in filename:
+        file_type = "print"
+        
+    print(f"Found latest {file_type} file: {latest_file}")
     
-    try:
-        while True:
-            try:
-                file_type, filepath = file_queue.get(timeout=1)
-                
-                # Give it a short delay to ensure the file is completely written before parsing
-                time.sleep(1)
-                
-                print(f"Analyzing {file_type} file: {filepath}...")
-                
-                if file_type == "survey":
-                    has_errors = plot_plate(filepath, required_volumes)
-                    return has_errors
-                elif file_type == "print":
-                    total_skipped, skipped_wells, barcode = parse_printresult_xml(filepath)
-                    if total_skipped is not None:
-                        has_errors = plot_print_plate(filepath, total_skipped, skipped_wells)
-                        return has_errors
-                    else:
-                        return True
-
-                
-            except queue.Empty:
-                pass
-    except KeyboardInterrupt:
-        print("\nStopping monitoring...")
-    finally:
-        observer.stop()
-        observer.join()
+    if file_type == "survey":
+        has_errors = plot_plate(latest_file, required_volumes)
+        return has_errors
+    elif file_type == "print":
+        total_skipped, skipped_wells, barcode = parse_printresult_xml(latest_file)
+        if total_skipped is not None:
+            has_errors = plot_print_plate(latest_file, total_skipped, skipped_wells)
+            return has_errors
+        else:
+            return True
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Unified Echo Monitor for Survey and Print Results.")
@@ -129,7 +99,7 @@ if __name__ == "__main__":
             sys.exit(1)
             
     if os.path.isdir(target_path):
-        has_errors = monitor_directory(target_path, required_volumes=req_vols)
+        has_errors = process_latest_file(target_path, required_volumes=req_vols)
         exit_code = 1 if has_errors else 0
         print(f"Exiting with code {exit_code}")
         sys.exit(exit_code)

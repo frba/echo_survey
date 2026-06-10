@@ -122,7 +122,10 @@ def plot_print_plate(filename, total_skipped, skipped_wells):
         plt.figtext(0.82, 0.5, warning_text, ha="left", va="center", fontsize=10, color="red",
                     bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', boxstyle='round,pad=0.5'))
         plt.tight_layout(rect=[0, 0, 0.8, 1])
-        plt.show()
+        png_filename = filename.replace('.xml', '.png')
+        plt.savefig(png_filename)
+        plt.close(fig)
+        print(f"Plot saved to {png_filename}")
         return True
     else:
         print("SUCCESS: All transfered wells were successful (0 skipped wells).")

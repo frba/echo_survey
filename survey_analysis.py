@@ -185,8 +185,11 @@ def plot_plate(xml_file, required_volumes=None):
         plt.title(f"Plate Layout: {filename}")
         plt.tight_layout()
     
-    # This will display the window popup
-    plt.show()
+    # Save the plot instead of displaying it to prevent hanging
+    png_filename = xml_file.replace('.xml', '.png')
+    plt.savefig(png_filename)
+    plt.close(fig)
+    print(f"Plot saved to {png_filename}")
     
     return len(insufficient_wells) > 0
 
