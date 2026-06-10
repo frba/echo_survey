@@ -191,6 +191,17 @@ def plot_plate(xml_file, required_volumes=None):
     plt.close(fig)
     print(f"Plot saved to {png_filename}")
     
+    try:
+        import platform, subprocess
+        if platform.system() == 'Windows':
+            os.startfile(png_filename)
+        elif platform.system() == 'Darwin':
+            subprocess.Popen(['open', png_filename])
+        else:
+            subprocess.Popen(['xdg-open', png_filename])
+    except Exception as e:
+        print(f"Could not open image: {e}")
+    
     return len(insufficient_wells) > 0
 
 if __name__ == "__main__":
