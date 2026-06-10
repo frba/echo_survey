@@ -124,19 +124,12 @@ def plot_print_plate(filename, total_skipped, skipped_wells):
         plt.tight_layout(rect=[0, 0, 0.8, 1])
         png_filename = filename.replace('.xml', '.png')
         plt.savefig(png_filename)
-        plt.close(fig)
         print(f"Plot saved to {png_filename}")
         
-        try:
-            import platform, subprocess
-            if platform.system() == 'Windows':
-                os.startfile(png_filename)
-            elif platform.system() == 'Darwin':
-                subprocess.Popen(['open', png_filename])
-            else:
-                subprocess.Popen(['xdg-open', png_filename])
-        except Exception as e:
-            print(f"Could not open image: {e}")
+        # Show the plot as a popup and automatically close it after 5 seconds
+        plt.show(block=False)
+        plt.pause(5)
+        plt.close(fig)
         return True
     else:
         print("SUCCESS: All transfered wells were successful (0 skipped wells).")
