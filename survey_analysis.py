@@ -188,7 +188,7 @@ def plot_plate(xml_file, required_volumes=None):
     # This will display the window popup
     plt.show()
     
-    return len(insufficient_wells) > 0 or skipped_count > 0
+    return len(insufficient_wells) > 0
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Echo Survey Analysis Monitor")
