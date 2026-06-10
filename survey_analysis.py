@@ -217,8 +217,10 @@ if __name__ == "__main__":
         # Just analyze the single file
         has_errors = plot_plate(target_path, req_vols)
         if has_errors:
+            print("Exiting with code 1")
             sys.exit(1)
         else:
+            print("Exiting with code 0")
             sys.exit(0)
     else:
         print(f"Error: Path '{target_path}' does not exist or is not a file.")

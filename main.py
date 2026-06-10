@@ -130,7 +130,9 @@ if __name__ == "__main__":
             
     if os.path.isdir(target_path):
         has_errors = monitor_directory(target_path, required_volumes=req_vols)
-        sys.exit(1 if has_errors else 0)
+        exit_code = 1 if has_errors else 0
+        print(f"Exiting with code {exit_code}")
+        sys.exit(exit_code)
     elif os.path.isfile(target_path):
         has_errors = False
         # Determine type and process immediately
@@ -144,8 +146,11 @@ if __name__ == "__main__":
                 has_errors = True
         else:
             print(f"Error: File '{target_path}' is neither a recognized SurveyResult nor PrintResult XML file.")
+            print("Exiting with code 1")
             sys.exit(1)
-        sys.exit(1 if has_errors else 0)
+        exit_code = 1 if has_errors else 0
+        print(f"Exiting with code {exit_code}")
+        sys.exit(exit_code)
     else:
         print(f"Error: Path '{target_path}' does not exist.")
         sys.exit(1)
