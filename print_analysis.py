@@ -81,33 +81,37 @@ def plot_print_plate(filename, total_skipped, skipped_wells):
             print("  - Detailed skipped well names were not found in the XML.")
             
         print("--------------------------------------------------\n")
+    else:
+        print("SUCCESS: All transfered wells were successful (0 skipped wells).")
+        print("--------------------------------------------------\n")
         
-        # Set up the matplotlib figure
-        fig, ax = plt.subplots(figsize=(max(10, cols * 0.45), max(6, rows * 0.45)))
-        
-        cmap = mcolors.ListedColormap(['#e0e0e0', '#ff6666', '#66cc66'])
-        bounds = [-0.5, 0.5, 1.5, 2.5]
-        norm = mcolors.BoundaryNorm(bounds, cmap.N)
+    # Set up the matplotlib figure
+    fig, ax = plt.subplots(figsize=(max(10, cols * 0.45), max(6, rows * 0.45)))
     
-        ax.imshow(color_map_data, cmap=cmap, norm=norm, origin='upper', aspect='equal')
-    
-        for r in range(rows):
-            for c in range(cols):
-                val = text_data[r][c]
-                if val:
-                    ax.text(c, r, val, ha='center', va='center', color='black', 
-                            fontsize=14, fontweight='bold')
-    
-        ax.set_xticks(np.arange(cols))
-        ax.set_yticks(np.arange(rows))
-        ax.set_xticklabels([str(i+1) for i in range(cols)])
-        ax.set_yticklabels([chr(65+i) for i in range(rows)])
-    
-        ax.set_xticks(np.arange(-0.5, cols, 1), minor=True)
-        ax.set_yticks(np.arange(-0.5, rows, 1), minor=True)
-        ax.grid(which='minor', color='black', linestyle='-', linewidth=1)
-        ax.tick_params(which='minor', bottom=False, left=False)
-    
+    cmap = mcolors.ListedColormap(['#e0e0e0', '#ff6666', '#66cc66'])
+    bounds = [-0.5, 0.5, 1.5, 2.5]
+    norm = mcolors.BoundaryNorm(bounds, cmap.N)
+
+    ax.imshow(color_map_data, cmap=cmap, norm=norm, origin='upper', aspect='equal')
+
+    for r in range(rows):
+        for c in range(cols):
+            val = text_data[r][c]
+            if val:
+                ax.text(c, r, val, ha='center', va='center', color='black', 
+                        fontsize=14, fontweight='bold')
+
+    ax.set_xticks(np.arange(cols))
+    ax.set_yticks(np.arange(rows))
+    ax.set_xticklabels([str(i+1) for i in range(cols)])
+    ax.set_yticklabels([chr(65+i) for i in range(rows)])
+
+    ax.set_xticks(np.arange(-0.5, cols, 1), minor=True)
+    ax.set_yticks(np.arange(-0.5, rows, 1), minor=True)
+    ax.grid(which='minor', color='black', linestyle='-', linewidth=1)
+    ax.tick_params(which='minor', bottom=False, left=False)
+
+    if total_skipped > 0:
         plt.title(f"Print Layout: {os.path.basename(filename)}\nWARNING: {total_skipped} wells were SKIPPED!", color='red', fontweight='bold')
         
         warning_text = f"Skipped Wells:\n"
@@ -122,16 +126,16 @@ def plot_print_plate(filename, total_skipped, skipped_wells):
         plt.figtext(0.82, 0.5, warning_text, ha="left", va="center", fontsize=10, color="red",
                     bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', boxstyle='round,pad=0.5'))
         plt.tight_layout(rect=[0, 0, 0.8, 1])
-        png_filename = filename.replace('.xml', '.png')
-        plt.savefig(png_filename)
-        print(f"Plot saved to {png_filename}")
-        
-        # Show the plot as a popup and automatically close it after 5 seconds
-        plt.show(block=False)
-        plt.pause(5)
-        plt.close(fig)
-        return True
     else:
-        print("SUCCESS: All transfered wells were successful (0 skipped wells).")
-        print("--------------------------------------------------\n")
-        return False
+        plt.title(f"Print Layout: {os.path.basename(filename)}\nSUCCESS: 0 wells skipped", color='green', fontweight='bold')
+        plt.tight_layout()
+
+    png_filename = filename.replace('.xml', '.png')
+    plt.savefig(png_filename)
+    print(f"Plot saved to {png_filename}")
+    
+    # Show the plot as a popup and automatically close it after 5 seconds
+    plt.show(block=False)
+    plt.pause(5)
+    plt.close(fig)
+    return total_skipped > 0
